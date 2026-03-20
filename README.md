@@ -149,15 +149,34 @@ CSS3
 
 Media queries para responsividade
 
-📌 Como Executar
+📌Como Executar o Sistema
 
-Instale um servidor PHP (XAMPP, WAMP ou PHP Built-in server).
+Siga os passos abaixo para executar o projeto localmente:
 
-Mantenha a estrutura de pastas conforme o projeto.
+Instalar um servidor PHP
 
-Abra index.php no navegador.
+Ex: XAMPP
+, WAMP ou usar o PHP Built-in server.
 
-Visualize o resumo do pedido e teste a adição de produtos.
+Baixar ou clonar o projeto
+
+git clone https://github.com/seu-usuario/projeto-php.git
+cd projeto-php
+
+Manter a estrutura de pastas
+Certifique-se de que index.php, style.css e a pasta classes/ estão na mesma raiz.
+
+Abrir o projeto no navegador
+
+Se estiver usando XAMPP/WAMP, coloque a pasta em htdocs ou www
+
+Acesse via navegador: http://localhost/rojeto-php/projeto_loja/index.php
+
+Visualizar o resumo do pedido
+
+O pedido será exibido com informações do cliente, produtos e total calculado.
+
+Teste a adição de novos produtos ou clientes alterando index.php.
 
 📜 Licença
 
