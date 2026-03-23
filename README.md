@@ -182,7 +182,7 @@ Teste a adição de novos produtos ou clientes alterando index.php.
 
 Projeto open source para estudo e prática pessoal.
 
-📈 Próximos Passos (opcional)
+📈 Próximos Passos
 
 Adicionar quantidade de produtos no pedido
 
