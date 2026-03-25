@@ -1,97 +1,112 @@
 <?php
 
-require_once __DIR__ . "/models/Cliente.php";
-require_once __DIR__ . "/models/Produto.php";
 require_once __DIR__ . "/dao/ClienteDAO.php";
 require_once __DIR__ . "/dao/ProdutoDAO.php";
 require_once __DIR__ . "/dao/PedidoDAO.php";
+
+require_once __DIR__ . "/models/cliente.php";
+require_once __DIR__ . "/models/produto.php";
+require_once __DIR__ . "/models/pedido.php";
 
 $clienteDAO = new ClienteDAO();
 $produtoDAO = new ProdutoDAO();
 $pedidoDAO  = new PedidoDAO();
 
-$mensagemCliente = "";
-$mensagemProduto = "";
-$mensagemPedido  = "";
-
-if(isset($_POST['salvar_cliente'])){
+/* =========================
+   CADASTRAR CLIENTE
+========================= */
+if (isset($_POST['salvar_cliente'])) {
 
     $nome = trim($_POST['nome']);
     $email = trim($_POST['email']);
 
-    if($nome && $email){
+    if ($nome && $email) {
 
         $cliente = new Cliente(null, $nome, $email);
+        $clienteDAO->inserir($cliente);
 
-        if($clienteDAO->inserir($cliente)){
-            $mensagemCliente = "Cliente cadastrado com sucesso!";
-        } else {
-            $mensagemCliente = "Erro ao cadastrar cliente!";
-        }
-
-    } else {
-        $mensagemCliente = "⚠️ Preencha todos os campos!";
+        header("Location: index.php");
+        exit;
     }
 }
 
-if(isset($_POST['salvar_produto'])){
+/* =========================
+   CADASTRAR PRODUTO
+========================= */
+if (isset($_POST['salvar_produto'])) {
 
     $nome = trim($_POST['produto_nome']);
     $preco = floatval($_POST['produto_preco']);
 
-    if($nome && $preco > 0){
+    if ($nome && $preco > 0) {
 
         $produto = new Produto(null, $nome, $preco);
+        $produtoDAO->inserir($produto);
 
-        if($produtoDAO->inserir($produto)){
-            $mensagemProduto = "Produto cadastrado com sucesso!";
-        } else {
-            $mensagemProduto = "Erro ao cadastrar produto!";
-        }
-
-    } else {
-        $mensagemProduto = "Nome ou preço inválido!";
+        header("Location: index.php");
+        exit;
     }
 }
 
-if(isset($_POST['salvar_pedido'])){
+/* =========================
+   CRIAR PEDIDO
+========================= */
+$pedidoCriado = null;
+
+if (isset($_POST['salvar_pedido'])) {
 
     $cliente_id = $_POST['cliente_id'] ?? null;
-    $produtos = $_POST['produtos'] ?? [];
+    $produtosSelecionados = $_POST['produtos'] ?? [];
 
-    if(!$cliente_id){
-        $mensagemPedido = "⚠️ Selecione um cliente!";
-    }
-    elseif(empty($produtos)){
-        $mensagemPedido = "⚠️ Selecione pelo menos um produto!";
-    }
-    else{
+    if ($cliente_id && !empty($produtosSelecionados)) {
 
-        if($pedidoDAO->inserir($cliente_id, $produtos)){
-            $mensagemPedido = "Pedido criado com sucesso!";
-        } else {
-            $mensagemPedido = "Erro ao criar pedido!";
+        $pedidoDAO->inserir($cliente_id, $produtosSelecionados);
+
+        // Buscar cliente
+        $clienteObj = $clienteDAO->buscarPorId($cliente_id);
+
+        // Criar objeto Pedido para exibição
+        $pedidoCriado = new Pedido(rand(1000,9999), $clienteObj);
+
+        $listaProdutos = $produtoDAO->listar();
+
+        foreach ($produtosSelecionados as $prod_id) {
+            foreach ($listaProdutos as $p) {
+                if ($p['id'] == $prod_id) {
+                    $produtoObj = new Produto($p['id'], $p['nome'], $p['preco']);
+                    $pedidoCriado->adicionarProduto($produtoObj);
+                }
+            }
         }
+
+        header("Location: index.php");
+        exit;
     }
 }
 
-$listaProdutos = $produtoDAO->listar();
-$listaClientes = $clienteDAO->listar();
+/* =========================
+   LISTAGENS
+========================= */
+$clientes = $clienteDAO->listar();
+$produtos = $produtoDAO->listar();
 
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema de Pedidos</title>
+    <title>Sistema de Loja</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container">
 
-    <h1>Cadastro de Cliente</h1>
+    <h1>Sistema de Pedidos</h1>
+
+    <!-- ================= CLIENTE ================= -->
+    <h2>Cadastro de Cliente</h2>
 
     <form method="POST">
         Nome:<br>
@@ -103,13 +118,38 @@ $listaClientes = $clienteDAO->listar();
         <button type="submit" name="salvar_cliente">Salvar Cliente</button>
     </form>
 
-    <?php if($mensagemCliente): ?>
-        <div class="cliente-mensagem"><?= $mensagemCliente ?></div>
-    <?php endif; ?>
+    <hr>
+
+    <h2>Clientes Cadastrados</h2>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Ações</th>
+        </tr>
+
+        <?php foreach ($clientes as $c): ?>
+            <tr>
+                <td><?= $c['id'] ?></td>
+                <td><?= htmlspecialchars($c['nome']) ?></td>
+                <td><?= htmlspecialchars($c['email']) ?></td>
+                <td>
+                    <a href="editar_cliente.php?id=<?= $c['id'] ?>">Editar</a> |
+                    <a href="excluir_cliente.php?id=<?= $c['id'] ?>"
+                       onclick="return confirm('Tem certeza?')">
+                       Excluir
+                    </a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
 
     <hr>
 
-    <h1>Cadastro de Produto</h1>
+    <!-- ================= PRODUTO ================= -->
+    <h2>Cadastro de Produto</h2>
 
     <form method="POST">
         Nome:<br>
@@ -121,22 +161,39 @@ $listaClientes = $clienteDAO->listar();
         <button type="submit" name="salvar_produto">Salvar Produto</button>
     </form>
 
-    <?php if($mensagemProduto): ?>
-        <div class="cliente-mensagem"><?= $mensagemProduto ?></div>
-    <?php endif; ?>
+    <hr>
+
+    <h2>Produtos Cadastrados</h2>
+
+    <table border="1" cellpadding="10">
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Preço</th>
+        </tr>
+
+        <?php foreach ($produtos as $p): ?>
+            <tr>
+                <td><?= $p['id'] ?></td>
+                <td><?= htmlspecialchars($p['nome']) ?></td>
+                <td>R$ <?= number_format($p['preco'],2,',','.') ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
 
     <hr>
 
-    <h1>Criar Pedido</h1>
+    <!-- ================= PEDIDO ================= -->
+    <h2>Criar Pedido</h2>
 
     <form method="POST">
 
         Cliente:<br>
         <select name="cliente_id" required>
-            <option value=""></option>
-            <?php foreach($listaClientes as $c): ?>
+            <option value="">Selecione</option>
+            <?php foreach ($clientes as $c): ?>
                 <option value="<?= $c['id'] ?>">
-                    <?= $c['nome'] ?> (<?= $c['email'] ?>)
+                    <?= htmlspecialchars($c['nome']) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -144,21 +201,28 @@ $listaClientes = $clienteDAO->listar();
         <br><br>
 
         Produtos:<br>
-        <?php if(empty($listaProdutos)): ?>
-            <p>⚠️ Cadastre produtos primeiro</p>
+
+        <?php if (empty($produtos)): ?>
+            <p>Cadastre produtos primeiro.</p>
         <?php else: ?>
-            <?php foreach($listaProdutos as $p): ?>
+            <?php foreach ($produtos as $p): ?>
                 <input type="checkbox" name="produtos[]" value="<?= $p['id'] ?>">
-                <?= $p['nome'] ?> - R$ <?= number_format($p['preco'],2,',','.') ?><br>
+                <?= htmlspecialchars($p['nome']) ?> - R$ <?= number_format($p['preco'],2,',','.') ?>
+                <br>
             <?php endforeach; ?>
         <?php endif; ?>
 
         <br>
+
         <button type="submit" name="salvar_pedido">Criar Pedido</button>
+
     </form>
 
-    <?php if($mensagemPedido): ?>
-        <div class="cliente-mensagem"><?= $mensagemPedido ?></div>
+    <!-- ================= RESUMO PEDIDO ================= -->
+    <?php if ($pedidoCriado): ?>
+        <div class="pedido-box">
+            <?php $pedidoCriado->exibirResumo(); ?>
+        </div>
     <?php endif; ?>
 
 </div>

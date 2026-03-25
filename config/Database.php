@@ -9,24 +9,20 @@ class Database {
 
     private $conn;
 
-    public function getConnection(){
-
+    public function getConnection() {
         try {
             $this->conn = new PDO(
-                "mysql:host={$this->host};dbname={$this->db}",
+                "mysql:host={$this->host};dbname={$this->db};charset=utf8",
                 $this->user,
                 $this->pass
             );
 
-            $this->conn->setAttribute(
-                PDO::ATTR_ERRMODE,
-                PDO::ERRMODE_EXCEPTION
-            );
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             return $this->conn;
 
-        } catch(PDOException $e){
-            echo "Erro: " . $e->getMessage();
+        } catch (PDOException $e) {
+            die("Erro na conexão.");
         }
     }
 }
